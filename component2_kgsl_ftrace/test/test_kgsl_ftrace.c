@@ -34,7 +34,6 @@ typedef struct VkInstance_T *VkInstance;
 typedef struct VkPhysicalDevice_T *VkPhysicalDevice;
 typedef struct VkDevice_T *VkDevice;
 typedef struct VkDeviceMemory_T *VkDeviceMemory;
-typedef struct VkQueue_T *VkQueue;
 typedef uint64_t VkDeviceSize;
 
 typedef struct { VkStructureType sType; const void *pNext;
@@ -80,7 +79,6 @@ typedef void (*PFN_vkUnmapMemory)(VkDevice, VkDeviceMemory);
 typedef void (*PFN_vkFreeMemory)(VkDevice, VkDeviceMemory, const void*);
 typedef void (*PFN_vkDestroyDevice)(VkDevice, const void*);
 typedef void (*PFN_vkDestroyInstance)(VkInstance, const void*);
-typedef void (*PFN_vkGetDeviceQueue)(VkDevice, uint32_t, uint32_t, VkQueue*);
 
 #define ALLOC_SIZE (256 * 1024)  /* 256 KiB, same as test_vulkan */
 
@@ -110,17 +108,21 @@ int main(void)
         return 1;
     }
 
-    PFN_vkCreateInstance             pvkCreateInstance             = (PFN_vkCreateInstance)dlsym(vk, "vkCreateInstance");
-    PFN_vkEnumeratePhysicalDevices   pvkEnumeratePhysicalDevices   = (PFN_vkEnumeratePhysicalDevices)dlsym(vk, "vkEnumeratePhysicalDevices");
-    PFN_vkGetPhysicalDeviceMemoryProperties pvkGetPhysicalDeviceMemoryProperties = (PFN_vkGetPhysicalDeviceMemoryProperties)dlsym(vk, "vkGetPhysicalDeviceMemoryProperties");
-    PFN_vkCreateDevice               pvkCreateDevice               = (PFN_vkCreateDevice)dlsym(vk, "vkCreateDevice");
-    PFN_vkAllocateMemory             pvkAllocateMemory             = (PFN_vkAllocateMemory)dlsym(vk, "vkAllocateMemory");
-    PFN_vkMapMemory                  pvkMapMemory                  = (PFN_vkMapMemory)dlsym(vk, "vkMapMemory");
-    PFN_vkUnmapMemory                pvkUnmapMemory                = (PFN_vkUnmapMemory)dlsym(vk, "vkUnmapMemory");
-    PFN_vkFreeMemory                 pvkFreeMemory                 = (PFN_vkFreeMemory)dlsym(vk, "vkFreeMemory");
-    PFN_vkDestroyDevice              pvkDestroyDevice              = (PFN_vkDestroyDevice)dlsym(vk, "vkDestroyDevice");
-    PFN_vkDestroyInstance            pvkDestroyInstance            = (PFN_vkDestroyInstance)dlsym(vk, "vkDestroyInstance");
-    (void)dlsym(vk, "vkGetDeviceQueue"); /* available but unused in this test */
+    #define LOAD_VK(type, var, sym) \
+        type var = (type)dlsym(vk, sym); \
+        if (!var) { printf("FATAL: missing %s\n", sym); return 1; }
+
+    LOAD_VK(PFN_vkCreateInstance,           pvkCreateInstance,           "vkCreateInstance")
+    LOAD_VK(PFN_vkEnumeratePhysicalDevices, pvkEnumeratePhysicalDevices, "vkEnumeratePhysicalDevices")
+    LOAD_VK(PFN_vkGetPhysicalDeviceMemoryProperties, pvkGetPhysicalDeviceMemoryProperties, "vkGetPhysicalDeviceMemoryProperties")
+    LOAD_VK(PFN_vkCreateDevice,             pvkCreateDevice,             "vkCreateDevice")
+    LOAD_VK(PFN_vkAllocateMemory,           pvkAllocateMemory,           "vkAllocateMemory")
+    LOAD_VK(PFN_vkMapMemory,                pvkMapMemory,                "vkMapMemory")
+    LOAD_VK(PFN_vkUnmapMemory,              pvkUnmapMemory,              "vkUnmapMemory")
+    LOAD_VK(PFN_vkFreeMemory,               pvkFreeMemory,               "vkFreeMemory")
+    LOAD_VK(PFN_vkDestroyDevice,            pvkDestroyDevice,            "vkDestroyDevice")
+    LOAD_VK(PFN_vkDestroyInstance,          pvkDestroyInstance,          "vkDestroyInstance")
+    #undef LOAD_VK
 
     /* Create Vulkan instance */
     VkApplicationInfo app_info = {

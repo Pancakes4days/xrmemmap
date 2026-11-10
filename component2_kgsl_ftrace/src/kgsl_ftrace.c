@@ -18,7 +18,6 @@
 #define EVENT_MEM_ALLOC  TRACE_DIR "/events/kgsl/kgsl_mem_alloc/enable"
 #define EVENT_MEM_MMAP   TRACE_DIR "/events/kgsl/kgsl_mem_mmap/enable"
 #define EVENT_MEM_FREE   TRACE_DIR "/events/kgsl/kgsl_mem_free/enable"
-#define EVENT_MEM_MAP    TRACE_DIR "/events/kgsl/kgsl_mem_map/enable"
 
 static pid_t s_filter_tgid;
 
@@ -39,7 +38,7 @@ int kgsl_trace_start(pid_t filter_tgid)
 
     if (write_file(TRACE_ON, "0") < 0)
         return -1;
-    if (write_file(TRACE_BUF, "") < 0)
+    if (write_file(TRACE_BUF, "0") < 0)
         return -1;
 
     if (write_file(EVENT_MEM_ALLOC, "1") < 0)
@@ -48,9 +47,6 @@ int kgsl_trace_start(pid_t filter_tgid)
         return -1;
     if (write_file(EVENT_MEM_FREE, "1") < 0)
         return -1;
-    if (write_file(EVENT_MEM_MAP, "1") < 0)
-        return -1;
-
     if (write_file(TRACE_ON, "1") < 0)
         return -1;
 
@@ -67,8 +63,6 @@ int kgsl_trace_stop(void)
     if (write_file(EVENT_MEM_MMAP, "0") < 0)
         err = -1;
     if (write_file(EVENT_MEM_FREE, "0") < 0)
-        err = -1;
-    if (write_file(EVENT_MEM_MAP, "0") < 0)
         err = -1;
     return err;
 }
@@ -197,9 +191,20 @@ static void parse_line(const char *line, kgsl_mapping_t *out, int *count, int ma
             p++;
         }
 
-        /* mmap events don't carry tgid; correlate by id */
-        int idx = find_or_create(out, count, max, id);
-        if (idx < 0) return;
+        /* mmap events don't carry tgid; correlate by existing alloc entry.
+         * When filtering by tgid, only populate entries that an alloc already
+         * created — don't create new entries from unfiltered mmap events. */
+        int idx;
+        if (filter_tgid > 0) {
+            idx = -1;
+            for (int i = 0; i < *count; i++) {
+                if (out[i].kgsl_id == id) { idx = i; break; }
+            }
+            if (idx < 0) return;
+        } else {
+            idx = find_or_create(out, count, max, id);
+            if (idx < 0) return;
+        }
         out[idx].useraddr = useraddr;
         if (!out[idx].gpuaddr) out[idx].gpuaddr = gpuaddr;
         if (!out[idx].size)    out[idx].size = size;
@@ -228,8 +233,6 @@ static void parse_line(const char *line, kgsl_mapping_t *out, int *count, int ma
         }
     }
 }
-
-/* s_filter_tgid declared near top of file, before kgsl_trace_start */
 
 int kgsl_trace_read(kgsl_mapping_t *out, int max_entries)
 {
