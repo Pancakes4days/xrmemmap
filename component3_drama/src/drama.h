@@ -71,13 +71,34 @@ typedef struct {
 
 /*
  * drama_derive_bank_fn — from scan results, find the address bits that
- * determine bank selection.
+ * determine bank selection (legacy brute-force approach).
  *
  * Returns 0 on success, -1 if insufficient data.
  */
 int drama_derive_bank_fn(const drama_pair_t *pairs, int npairs,
                          const uint64_t *phys, int npages,
                          drama_bank_fn_t *out);
+
+/*
+ * drama_probe_bank_fn — targeted bit-probing approach.
+ *
+ * For each physical address bit PA[13]-PA[30], finds page pairs that
+ * differ in exactly that bit, times them, and classifies bank vs row.
+ * Then tests two-bit XOR combinations for XOR bank functions.
+ *
+ * buf:        base of a large mmap'd region (>= 16 MiB recommended)
+ * buf_size:   size in bytes
+ * pfns[]:     PFN for each page (pa >> 12), indexed by page number.
+ *             Entry 0 means unresolved.
+ * npages:     number of entries in pfns[]
+ * rounds:     timing iterations per probe (2000+ recommended)
+ * out:        result
+ *
+ * Returns 0 on success, -1 if not enough matching pairs found.
+ */
+int drama_probe_bank_fn(void *buf, size_t buf_size,
+                        const uint64_t *pfns, int npages,
+                        int rounds, drama_bank_fn_t *out);
 
 /* Apply derived bank function to a physical address. */
 int drama_get_bank(const drama_bank_fn_t *fn, uint64_t pa);

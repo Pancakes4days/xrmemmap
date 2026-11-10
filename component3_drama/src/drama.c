@@ -246,6 +246,152 @@ int drama_derive_bank_fn(const drama_pair_t *pairs, int npairs,
     return nbits > 0 ? 0 : -1;
 }
 
+/* --- Targeted bit-probing derivation --- */
+
+#define PROBE_MAX_PAIRS  8
+#define PROBE_MIN_BIT    1   /* PFN bit 1 = PA[13] */
+#define PROBE_MAX_BIT    18  /* PFN bit 18 = PA[30] */
+
+static int find_pfn_pairs(const uint64_t *pfns, int npages,
+                          uint64_t target_xor,
+                          int pairs[][2], int max_out)
+{
+    int count = 0;
+    for (int i = 0; i < npages && count < max_out; i++) {
+        if (pfns[i] == 0) continue;
+        uint64_t wanted = pfns[i] ^ target_xor;
+        for (int j = i + 1; j < npages && count < max_out; j++) {
+            if (pfns[j] == wanted) {
+                pairs[count][0] = i;
+                pairs[count][1] = j;
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+static uint64_t probe_median(void *buf, size_t page_size,
+                             const uint64_t *pfns, int npages,
+                             uint64_t target_xor, int rounds)
+{
+    int pairs[PROBE_MAX_PAIRS][2];
+    int np = find_pfn_pairs(pfns, npages, target_xor,
+                            pairs, PROBE_MAX_PAIRS);
+    if (np == 0) return 0;
+
+    uint64_t times[PROBE_MAX_PAIRS];
+    for (int i = 0; i < np; i++) {
+        volatile char *a = (volatile char *)buf + (size_t)pairs[i][0] * page_size;
+        volatile char *b = (volatile char *)buf + (size_t)pairs[i][1] * page_size;
+        times[i] = drama_time_pair(a, b, rounds);
+    }
+
+    /* Sort and return median */
+    for (int i = 0; i < np - 1; i++)
+        for (int j = i + 1; j < np; j++)
+            if (times[j] < times[i]) {
+                uint64_t t = times[i]; times[i] = times[j]; times[j] = t;
+            }
+    return times[np / 2];
+}
+
+int drama_probe_bank_fn(void *buf, size_t buf_size,
+                        const uint64_t *pfns, int npages,
+                        int rounds, drama_bank_fn_t *out)
+{
+    memset(out, 0, sizeof(*out));
+
+    size_t page_size = 4096;
+    int tested = 0;
+
+    /* Phase 1: probe each single bit */
+    uint64_t bit_time[32] = {0};
+    for (int b = PROBE_MIN_BIT; b <= PROBE_MAX_BIT; b++) {
+        uint64_t med = probe_median(buf, page_size, pfns, npages,
+                                    1ULL << b, rounds);
+        bit_time[b] = med;
+        if (med > 0) tested++;
+    }
+
+    if (tested < 4) return -1;
+
+    /* Sort measured times to find bank/row threshold */
+    uint64_t sorted[32];
+    int nsorted = 0;
+    for (int b = PROBE_MIN_BIT; b <= PROBE_MAX_BIT; b++)
+        if (bit_time[b] > 0)
+            sorted[nsorted++] = bit_time[b];
+
+    for (int i = 0; i < nsorted - 1; i++)
+        for (int j = i + 1; j < nsorted; j++)
+            if (sorted[j] < sorted[i]) {
+                uint64_t t = sorted[i]; sorted[i] = sorted[j]; sorted[j] = t;
+            }
+
+    /* Find bank/row gap: largest relative gap among splits leaving 2-6 fast bits */
+    double best_ratio = 0;
+    int best_idx = 1;
+    int hi = nsorted - 2;
+    if (hi > 6) hi = 6;
+    for (int i = 1; i <= hi && i < nsorted - 1; i++) {
+        if (sorted[i] == 0) continue;
+        double ratio = (double)sorted[i + 1] / (double)sorted[i];
+        if (ratio > best_ratio) {
+            best_ratio = ratio;
+            best_idx = i;
+        }
+    }
+    uint64_t threshold = (sorted[best_idx] + sorted[best_idx + 1]) / 2;
+
+    /* Classify: bank bits are below threshold */
+    int is_bank[32] = {0};
+    int nbits = 0;
+    for (int b = PROBE_MIN_BIT; b <= PROBE_MAX_BIT; b++) {
+        if (bit_time[b] > 0 && bit_time[b] < threshold) {
+            is_bank[b] = 1;
+            if (nbits < 16)
+                out->masks[nbits++] = 1ULL << (b + 12);
+        }
+    }
+
+    /* Phase 2: check for XOR partners.
+     * For each bank bit B, test B^X for row bits X.
+     * If B^X is slow (>= threshold), then bank_fn = PA[B] XOR PA[X]. */
+    for (int b = PROBE_MIN_BIT; b <= PROBE_MAX_BIT && nbits < 16; b++) {
+        if (!is_bank[b]) continue;
+        for (int x = PROBE_MIN_BIT; x <= PROBE_MAX_BIT; x++) {
+            if (x == b || is_bank[x]) continue;
+            uint64_t target = (1ULL << b) | (1ULL << x);
+            uint64_t med = probe_median(buf, page_size, pfns, npages,
+                                        target, rounds);
+            if (med == 0) continue;
+
+            if (med >= threshold) {
+                /* Validate with higher rounds */
+                uint64_t confirm = probe_median(buf, page_size, pfns, npages,
+                                                target, rounds * 2);
+                if (confirm >= threshold) {
+                    /* Replace simple bit with XOR mask */
+                    for (int i = 0; i < nbits; i++) {
+                        if (out->masks[i] == (1ULL << (b + 12))) {
+                            out->masks[i] = (1ULL << (b + 12)) | (1ULL << (x + 12));
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    out->nbits  = nbits;
+    out->nbanks = 1 << nbits;
+
+    (void)buf_size;
+    return nbits > 0 ? 0 : -1;
+}
+
 int drama_get_bank(const drama_bank_fn_t *fn, uint64_t pa)
 {
     int bank = 0;
