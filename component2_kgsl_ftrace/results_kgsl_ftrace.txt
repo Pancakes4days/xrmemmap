@@ -1,0 +1,25 @@
+xrmemmap Component 2 — KGSL ftrace GPU VA capture self-test
+uid: 0 (root)
+
+test PID: 7439
+
+[1] Starting KGSL ftrace capture...
+[2] Vulkan allocation: CPU VA=0x7bec208000, size=262144
+[3] Stopping ftrace and reading events...
+    captured 1 KGSL mapping(s)
+
+    id    GPU VA              CPU VA              size        usage               freed
+    13    0x000000050042a000  0x0000007bec208000  262144      vk_devicememory     no
+
+[4] Correlating: looking up CPU VA 0x7bec208000 in KGSL mappings...
+    MATCH: kgsl_id=13  GPU VA=0x50042a000  CPU VA=0x7bec208000  size=262144  usage=vk_devicememory
+
+[5] Full address chain (first 4 + last page):
+    page    CPU VA              GPU VA              Physical PA       
+    0       0x0000007bec208000  0x000000050042a000  0x0000000126c75000
+    1       0x0000007bec209000  0x000000050042b000  0x0000000126c76000
+    2       0x0000007bec20a000  0x000000050042c000  0x0000000126c77000
+    3       0x0000007bec20b000  0x000000050042d000  0x0000000126c78000
+    63      0x0000007bec247000  0x0000000500469000  0x0000000126cb4000
+
+PASS (0 failures)

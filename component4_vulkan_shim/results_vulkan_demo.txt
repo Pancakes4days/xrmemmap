@@ -1,0 +1,149 @@
+== xrmemmap Vulkan allocation probe — demo output ==
+== captured 2026-11-01 on Meta Quest 1 (1PASH9AMUN9435) ==
+== firmware 49845030443200410, kernel 4.4.205-perf+, slot A ==
+== run unprivileged (uid=2000/shell) ==
+
+xrmemmap Vulkan allocation probe
+requested allocation: 256 KiB
+
+device: Adreno (TM) 540 (Vulkan 1.1.128, driver 0x8022b000)
+
+device extensions (44):
+  VK_KHR_incremental_present (rev 1)
+  VK_KHR_shared_presentable_image (rev 1)
+  VK_GOOGLE_display_timing (rev 1)
+  VK_KHR_external_memory (rev 1)
+  VK_EXT_pipeline_creation_feedback (rev 1)
+  VK_KHR_get_memory_requirements2 (rev 1)
+  VK_EXT_fragment_density_map (rev 1)
+  VK_KHR_external_semaphore_fd (rev 1)
+  VK_QCOM_render_pass_store_ops (rev 2)
+  VK_KHR_external_memory_fd (rev 1)
+  VK_QCOM_render_pass_shader_resolve (rev 4)
+  VK_KHR_maintenance1 (rev 1)
+  VK_KHR_maintenance2 (rev 1)
+  VK_KHR_maintenance3 (rev 1)
+  VK_KHR_separate_depth_stencil_layouts (rev 1)
+  VK_EXT_queue_family_foreign (rev 1)
+  VK_KHR_bind_memory2 (rev 1)
+  VK_KHR_external_semaphore (rev 1)
+  VK_KHR_sampler_ycbcr_conversion (rev 1)
+  VK_KHR_variable_pointers (rev 1)
+  VK_KHR_push_descriptor (rev 1)
+  VK_EXT_device_memory_report (rev 2)
+  VK_KHR_device_group (rev 2)
+  VK_KHR_relaxed_block_layout (rev 1)
+  VK_KHR_external_fence (rev 1)
+  VK_EXT_index_type_uint8 (rev 1)
+  VK_KHR_multiview (rev 1)
+  VK_KHR_storage_buffer_storage_class (rev 1)
+  VK_EXT_fragment_density_map2 (rev 1)
+  VK_EXT_private_data (rev 1)
+  VK_EXT_pipeline_creation_cache_control (rev 1)
+  VK_EXT_sampler_filter_minmax (rev 1)
+  VK_KHR_create_renderpass2 (rev 1)
+  VK_EXT_texture_compression_astc_hdr (rev 1)
+  VK_EXT_global_priority (rev 2)
+  VK_KHR_shader_draw_parameters (rev 1)
+  VK_EXT_line_rasterization (rev 1)
+  VK_KHR_descriptor_update_template (rev 1)
+  VK_KHR_driver_properties (rev 1)
+  VK_ANDROID_external_memory_android_hardware_buffer (rev 2)
+  VK_KHR_dedicated_allocation (rev 1)
+  VK_KHR_swapchain (rev 70)
+  VK_KHR_sampler_mirror_clamp_to_edge (rev 1)
+  VK_KHR_external_fence_fd (rev 1)
+
+watched extensions:
+  [ ] VK_KHR_buffer_device_address
+  [ ] VK_EXT_external_memory_host
+  [ ] VK_KHR_shader_clock
+  [ ] VK_EXT_host_query_reset
+
+KGSL backing check (priority #6):
+  fd:  lrwx------ 1 shell shell 64 2024-07-31 09:09 4 -> /dev/kgsl-3d0
+  map: 7e0cc5b000-7e0d05c000 rw-s 0000b000 00:10 18481  /dev/kgsl-3d0
+  map: 7e0efc9000-7e0efd9000 rw-s 00002000 00:10 18481  /dev/kgsl-3d0
+  map: 7e0f04b000-7e0f04c000 rw-s 0000c000 00:10 18481  /dev/kgsl-3d0
+  map: 7e0f04c000-7e0f04d000 rw-s 0000a000 00:10 18481  /dev/kgsl-3d0
+  => confirmed: Vulkan is using /dev/kgsl-3d0 (5 reference(s))
+
+vkAllocateMemory: handle=0x7e0dc26d00  size=262144  memType=2
+vkMapMemory:     CPU VA=0x7e0d24e000
+
+page-by-page resolution (page size 4096):
+  page   0  VA=0x7e0d24e000  unresolved (present=1)
+  page   1  VA=0x7e0d24f000  unresolved (present=1)
+  page   2  VA=0x7e0d250000  unresolved (present=1)
+  page   3  VA=0x7e0d251000  unresolved (present=1)
+  page   4  VA=0x7e0d252000  unresolved (present=1)
+  page   5  VA=0x7e0d253000  unresolved (present=1)
+  page   6  VA=0x7e0d254000  unresolved (present=1)
+  page   7  VA=0x7e0d255000  unresolved (present=1)
+  page   8  VA=0x7e0d256000  unresolved (present=1)
+  page   9  VA=0x7e0d257000  unresolved (present=1)
+  page  10  VA=0x7e0d258000  unresolved (present=1)
+  page  11  VA=0x7e0d259000  unresolved (present=1)
+  page  12  VA=0x7e0d25a000  unresolved (present=1)
+  page  13  VA=0x7e0d25b000  unresolved (present=1)
+  page  14  VA=0x7e0d25c000  unresolved (present=1)
+  page  15  VA=0x7e0d25d000  unresolved (present=1)
+  page  16  VA=0x7e0d25e000  unresolved (present=1)
+  page  17  VA=0x7e0d25f000  unresolved (present=1)
+  page  18  VA=0x7e0d260000  unresolved (present=1)
+  page  19  VA=0x7e0d261000  unresolved (present=1)
+  page  20  VA=0x7e0d262000  unresolved (present=1)
+  page  21  VA=0x7e0d263000  unresolved (present=1)
+  page  22  VA=0x7e0d264000  unresolved (present=1)
+  page  23  VA=0x7e0d265000  unresolved (present=1)
+  page  24  VA=0x7e0d266000  unresolved (present=1)
+  page  25  VA=0x7e0d267000  unresolved (present=1)
+  page  26  VA=0x7e0d268000  unresolved (present=1)
+  page  27  VA=0x7e0d269000  unresolved (present=1)
+  page  28  VA=0x7e0d26a000  unresolved (present=1)
+  page  29  VA=0x7e0d26b000  unresolved (present=1)
+  page  30  VA=0x7e0d26c000  unresolved (present=1)
+  page  31  VA=0x7e0d26d000  unresolved (present=1)
+  page  32  VA=0x7e0d26e000  unresolved (present=1)
+  page  33  VA=0x7e0d26f000  unresolved (present=1)
+  page  34  VA=0x7e0d270000  unresolved (present=1)
+  page  35  VA=0x7e0d271000  unresolved (present=1)
+  page  36  VA=0x7e0d272000  unresolved (present=1)
+  page  37  VA=0x7e0d273000  unresolved (present=1)
+  page  38  VA=0x7e0d274000  unresolved (present=1)
+  page  39  VA=0x7e0d275000  unresolved (present=1)
+  page  40  VA=0x7e0d276000  unresolved (present=1)
+  page  41  VA=0x7e0d277000  unresolved (present=1)
+  page  42  VA=0x7e0d278000  unresolved (present=1)
+  page  43  VA=0x7e0d279000  unresolved (present=1)
+  page  44  VA=0x7e0d27a000  unresolved (present=1)
+  page  45  VA=0x7e0d27b000  unresolved (present=1)
+  page  46  VA=0x7e0d27c000  unresolved (present=1)
+  page  47  VA=0x7e0d27d000  unresolved (present=1)
+  page  48  VA=0x7e0d27e000  unresolved (present=1)
+  page  49  VA=0x7e0d27f000  unresolved (present=1)
+  page  50  VA=0x7e0d280000  unresolved (present=1)
+  page  51  VA=0x7e0d281000  unresolved (present=1)
+  page  52  VA=0x7e0d282000  unresolved (present=1)
+  page  53  VA=0x7e0d283000  unresolved (present=1)
+  page  54  VA=0x7e0d284000  unresolved (present=1)
+  page  55  VA=0x7e0d285000  unresolved (present=1)
+  page  56  VA=0x7e0d286000  unresolved (present=1)
+  page  57  VA=0x7e0d287000  unresolved (present=1)
+  page  58  VA=0x7e0d288000  unresolved (present=1)
+  page  59  VA=0x7e0d289000  unresolved (present=1)
+  page  60  VA=0x7e0d28a000  unresolved (present=1)
+  page  61  VA=0x7e0d28b000  unresolved (present=1)
+  page  62  VA=0x7e0d28c000  unresolved (present=1)
+  page  63  VA=0x7e0d28d000  unresolved (present=1)
+
+64/64 pages unresolved — run under root (su) for physical PFNs
+
+== NOTES ==
+- Demonstrates the full chain: Vulkan handle -> CPU VA -> pagemap resolution
+  handle  0x7e0dc26d00  (VkDeviceMemory, HOST_VISIBLE|HOST_COHERENT, 256 KiB)
+  CPU VA  0x7e0d24e000  (vkMapMemory base, 64 pages touched)
+  PFN     gated on root (present=1 proves pages are resident)
+- All 4 watched extensions ABSENT: GPU VA must come from KGSL ftrace (Component 2)
+- Vulkan routes through /dev/kgsl-3d0: Component 2 design validated
+- Under root, the "unresolved" column fills with PFN=0x... PA=0x... values

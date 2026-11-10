@@ -1,0 +1,73 @@
+# Adreno 540 Vulkan probe — captured 2026-10-31T20:07:14Z
+# Device: Meta Quest 1 (1PASH9AMUN9435), firmware 49845030443200410
+# Run unprivileged (no root); PFN column pending Magisk.
+
+xrmemmap Vulkan allocation probe
+requested allocation: 32 KiB
+
+device: Adreno (TM) 540 (Vulkan 1.1.128, driver 0x8022b000)
+
+device extensions (44):
+  VK_KHR_incremental_present (rev 1)
+  VK_KHR_shared_presentable_image (rev 1)
+  VK_GOOGLE_display_timing (rev 1)
+  VK_KHR_external_memory (rev 1)
+  VK_EXT_pipeline_creation_feedback (rev 1)
+  VK_KHR_get_memory_requirements2 (rev 1)
+  VK_EXT_fragment_density_map (rev 1)
+  VK_KHR_external_semaphore_fd (rev 1)
+  VK_QCOM_render_pass_store_ops (rev 2)
+  VK_KHR_external_memory_fd (rev 1)
+  VK_QCOM_render_pass_shader_resolve (rev 4)
+  VK_KHR_maintenance1 (rev 1)
+  VK_KHR_maintenance2 (rev 1)
+  VK_KHR_maintenance3 (rev 1)
+  VK_KHR_separate_depth_stencil_layouts (rev 1)
+  VK_EXT_queue_family_foreign (rev 1)
+  VK_KHR_bind_memory2 (rev 1)
+  VK_KHR_external_semaphore (rev 1)
+  VK_KHR_sampler_ycbcr_conversion (rev 1)
+  VK_KHR_variable_pointers (rev 1)
+  VK_KHR_push_descriptor (rev 1)
+  VK_EXT_device_memory_report (rev 2)
+  VK_KHR_device_group (rev 2)
+  VK_KHR_relaxed_block_layout (rev 1)
+  VK_KHR_external_fence (rev 1)
+  VK_EXT_index_type_uint8 (rev 1)
+  VK_KHR_multiview (rev 1)
+  VK_KHR_storage_buffer_storage_class (rev 1)
+  VK_EXT_fragment_density_map2 (rev 1)
+  VK_EXT_private_data (rev 1)
+  VK_EXT_pipeline_creation_cache_control (rev 1)
+  VK_EXT_sampler_filter_minmax (rev 1)
+  VK_KHR_create_renderpass2 (rev 1)
+  VK_EXT_texture_compression_astc_hdr (rev 1)
+  VK_EXT_global_priority (rev 2)
+  VK_KHR_shader_draw_parameters (rev 1)
+  VK_EXT_line_rasterization (rev 1)
+  VK_KHR_descriptor_update_template (rev 1)
+  VK_KHR_driver_properties (rev 1)
+  VK_ANDROID_external_memory_android_hardware_buffer (rev 2)
+  VK_KHR_dedicated_allocation (rev 1)
+  VK_KHR_swapchain (rev 70)
+  VK_KHR_sampler_mirror_clamp_to_edge (rev 1)
+  VK_KHR_external_fence_fd (rev 1)
+
+watched extensions:
+  [ ] VK_KHR_buffer_device_address
+  [ ] VK_EXT_external_memory_host
+  [ ] VK_KHR_shader_clock
+  [ ] VK_EXT_host_query_reset
+
+KGSL backing check (priority #6):
+  fd:  lrwx------ 1 shell shell 64 2024-07-31 09:16 4 -> /dev/kgsl-3d0
+  map: 7951fca000-79523cb000 rw-s 0000b000 00:10 680                            /dev/kgsl-3d0
+  map: 795433d000-795434d000 rw-s 00002000 00:10 680                            /dev/kgsl-3d0
+  map: 7954371000-7954372000 rw-s 0000c000 00:10 680                            /dev/kgsl-3d0
+  map: 7954372000-7954373000 rw-s 0000a000 00:10 680                            /dev/kgsl-3d0
+  => confirmed: Vulkan is using /dev/kgsl-3d0 (5 reference(s))
+
+vkAllocateMemory: handle=0x7953026d00  size=32768  memType=2
+vkMapMemory:     CPU VA=0x7954335000
+
+

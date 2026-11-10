@@ -1,0 +1,35 @@
+== xrmemmap Component 1 — pagemap reader demo output ==
+== captured 2026-11-01 on Meta Quest 1 (1PASH9AMUN9435) ==
+== firmware 49845030443200410, kernel 4.4.205-perf+, slot A ==
+== run unprivileged (uid=2000/shell) ==
+
+xrmemmap Component 1 — pagemap reader self-test
+page size: 4096 bytes
+uid: 2000 (unprivileged — PFNs may be hidden)
+
+[anon mmap, 4 pages, touched]
+  page[0]            VA=0x713d08d000  present=1 swap=0 excl=1 dirty=0  PA=unresolved (Permission denied)
+      -> present but PFN hidden: run as root (CAP_SYS_ADMIN)
+  page[1]            VA=0x713d08e000  present=1 swap=0 excl=1 dirty=0  PA=unresolved (Permission denied)
+      -> present but PFN hidden: run as root (CAP_SYS_ADMIN)
+  page[2]            VA=0x713d08f000  present=1 swap=0 excl=1 dirty=0  PA=unresolved (Permission denied)
+      -> present but PFN hidden: run as root (CAP_SYS_ADMIN)
+  page[3]            VA=0x713d090000  present=1 swap=0 excl=1 dirty=0  PA=unresolved (Permission denied)
+      -> present but PFN hidden: run as root (CAP_SYS_ADMIN)
+
+[anon mmap, untouched — expect not-present]
+  OK: untouched page reported not-present (No data available)
+
+[range lookup over touched buffer]
+  resolved 4 entries
+
+PASS (0 hard failures)
+
+== NOTES ==
+- present=1 confirms pages are resident after touch
+- excl=1 (exclusive) confirms single-owner anonymous pages
+- swap=0 confirms no swap activity
+- PFN values hidden (zeroed by kernel) because uid != 0
+- Under root (CAP_SYS_ADMIN), the PA= column shows real physical addresses
+- The pagemap bit layout is correct: bit 63=present, bit 62=swap, bit 61=file,
+  bit 56=exclusive, bit 55=soft-dirty, bits 0-54=PFN

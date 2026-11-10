@@ -1,0 +1,12 @@
+# Build output
+build/
+
+# Boot images (large binaries, keep SHA256 hashes only)
+boot_images/*.img
+
+# NDK/toolchain
+.cxx/
+
+# OS junk
+.DS_Store
+Thumbs.db
