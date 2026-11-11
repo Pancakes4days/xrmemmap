@@ -15,6 +15,7 @@
 #include <stdio.h>
 
 #include "kgsl_ftrace.h"
+#include "drama.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,6 +27,7 @@ typedef struct {
     uint64_t phys_addr;
     uint64_t pfn;
     int      present;
+    int      bank;       /* DRAM bank index, or -1 if unknown */
 } xrmemmap_page_t;
 
 typedef struct {
@@ -52,6 +54,9 @@ typedef struct {
 int xrmemmap_resolve(uint64_t cpu_va, uint64_t size,
                      const kgsl_mapping_t *mappings, int nmappings,
                      xrmemmap_alloc_t *out);
+
+/* Set the DRAM bank function. If set, xrmemmap_resolve() populates bank. */
+void xrmemmap_set_bank_fn(const drama_bank_fn_t *fn);
 
 /* Free the pages array inside an alloc struct. */
 void xrmemmap_free(xrmemmap_alloc_t *alloc);

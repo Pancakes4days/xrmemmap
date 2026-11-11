@@ -22,12 +22,13 @@ DEVICE_DIR ?= /data/local/tmp
 
 PAGEMAP    := ../component1_pagemap/src
 KGSL       := ../component2_kgsl_ftrace/src
-CFLAGS     := -std=c11 -O2 -Wall -Wextra -I$(PAGEMAP) -I$(KGSL) -Isrc
+DRAMA      := ../component3_drama/src
+CFLAGS     := -std=c11 -O2 -Wall -Wextra -I$(PAGEMAP) -I$(KGSL) -I$(DRAMA) -Isrc
 LDLIBS     := -lvulkan
 BUILD      := build
 
 PROBE_SRCS := src/test_vulkan.c $(PAGEMAP)/pagemap.c
-SHIM_SRCS  := src/shim.c src/correlator.c $(PAGEMAP)/pagemap.c $(KGSL)/kgsl_ftrace.c
+SHIM_SRCS  := src/shim.c src/correlator.c $(PAGEMAP)/pagemap.c $(KGSL)/kgsl_ftrace.c $(DRAMA)/drama.c
 SHIM_FLAGS := -shared -fPIC
 SHIM_LIBS  := -ldl
 
@@ -50,7 +51,7 @@ $(BUILD)/test_vulkan: $(PROBE_SRCS) $(PAGEMAP)/pagemap.h src/test_vulkan.c | $(B
 	$(CC) $(CFLAGS) $(PROBE_SRCS) $(LDLIBS) -o $@
 	@echo "built $@ for $(ABI) (API $(API))"
 
-$(BUILD)/libxrmemmap.so: $(SHIM_SRCS) src/correlator.h | $(BUILD)
+$(BUILD)/libxrmemmap.so: $(SHIM_SRCS) src/correlator.h $(DRAMA)/drama.h | $(BUILD)
 	$(CC) $(CFLAGS) $(SHIM_FLAGS) $(SHIM_SRCS) $(SHIM_LIBS) -o $@
 	@echo "built $@ for $(ABI) (API $(API))"
 

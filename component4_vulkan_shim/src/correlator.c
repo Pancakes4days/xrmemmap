@@ -9,6 +9,15 @@
 #include <string.h>
 #include <inttypes.h>
 
+static drama_bank_fn_t s_bank_fn;
+static int s_bank_fn_set;
+
+void xrmemmap_set_bank_fn(const drama_bank_fn_t *fn)
+{
+    s_bank_fn = *fn;
+    s_bank_fn_set = 1;
+}
+
 int xrmemmap_resolve(uint64_t cpu_va, uint64_t size,
                      const kgsl_mapping_t *mappings, int nmappings,
                      xrmemmap_alloc_t *out)
@@ -41,6 +50,7 @@ int xrmemmap_resolve(uint64_t cpu_va, uint64_t size,
 
         pg->cpu_va = va;
         pg->gpu_va = gpu_base + cpu_offset + i * page_size;
+        pg->bank   = -1;
 
         pagemap_entry_t pme;
         uint64_t pa = pagemap_lookup((const void *)(uintptr_t)va, &pme);
@@ -48,6 +58,8 @@ int xrmemmap_resolve(uint64_t cpu_va, uint64_t size,
             pg->phys_addr = pa;
             pg->pfn       = pme.pfn;
             pg->present   = 1;
+            if (s_bank_fn_set)
+                pg->bank = drama_get_bank(&s_bank_fn, pa);
         }
     }
 
@@ -75,8 +87,11 @@ void xrmemmap_print(const xrmemmap_alloc_t *alloc, FILE *fp)
         if (pg->present) {
             fprintf(fp, "[xrmemmap]   page[%3zu]  cpu=0x%" PRIx64
                     "  gpu=0x%" PRIx64 "  pa=0x%" PRIx64
-                    "  pfn=0x%" PRIx64 "\n",
+                    "  pfn=0x%" PRIx64,
                     i, pg->cpu_va, pg->gpu_va, pg->phys_addr, pg->pfn);
+            if (pg->bank >= 0)
+                fprintf(fp, "  bank=%d", pg->bank);
+            fprintf(fp, "\n");
             resolved++;
         } else {
             fprintf(fp, "[xrmemmap]   page[%3zu]  cpu=0x%" PRIx64

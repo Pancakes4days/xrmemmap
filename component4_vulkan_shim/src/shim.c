@@ -24,9 +24,13 @@
 #include "correlator.h"
 #include "pagemap.h"
 #include "kgsl_ftrace.h"
+#include "drama.h"
+
+#include <sys/mman.h>
 
 #define TAG "[xrmemmap] "
 #define MAX_ALLOCS 256
+#define BANK_PROBE_SIZE (32 * 1024 * 1024)
 
 typedef struct {
     VkDeviceMemory handle;
@@ -42,6 +46,7 @@ typedef struct {
 static tracked_alloc_t s_allocs[MAX_ALLOCS];
 static int s_tracing;
 static int s_initialized;
+static int s_bank_fn_ready;
 
 /* Real Vulkan functions, resolved lazily via RTLD_NEXT */
 static PFN_vkAllocateMemory   s_real_alloc;
@@ -74,6 +79,60 @@ static tracked_alloc_t *find_free_slot(void)
         if (!s_allocs[i].active)
             return &s_allocs[i];
     return NULL;
+}
+
+static void ensure_bank_fn(void)
+{
+    if (s_bank_fn_ready)
+        return;
+    s_bank_fn_ready = 1;
+
+    if (drama_init(-1) < 0) {
+        fprintf(stderr, TAG "WARNING: drama_init failed, bank info unavailable\n");
+        return;
+    }
+
+    size_t ps = pagemap_page_size();
+    size_t np = BANK_PROBE_SIZE / ps;
+
+    void *buf = mmap(NULL, BANK_PROBE_SIZE, PROT_READ | PROT_WRITE,
+                     MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE, -1, 0);
+    if (buf == MAP_FAILED) {
+        fprintf(stderr, TAG "WARNING: bank probe mmap failed\n");
+        return;
+    }
+
+    volatile char *p = buf;
+    for (size_t i = 0; i < np; i++)
+        p[i * ps] = (char)i;
+
+    uint64_t *pfns = calloc(np, sizeof(uint64_t));
+    if (!pfns) {
+        munmap(buf, BANK_PROBE_SIZE);
+        return;
+    }
+
+    for (size_t i = 0; i < np; i++) {
+        pagemap_entry_t pme;
+        uint64_t pa = pagemap_lookup((char *)buf + i * ps, &pme);
+        if (pa != PAGEMAP_INVALID_PADDR)
+            pfns[i] = pa >> 12;
+    }
+
+    drama_bank_fn_t fn;
+    if (drama_probe_bank_fn(buf, BANK_PROBE_SIZE, pfns, (int)np, 2000, &fn) == 0) {
+        xrmemmap_set_bank_fn(&fn);
+        fprintf(stderr, TAG "bank function: %d bits, %d banks, masks:",
+                fn.nbits, fn.nbanks);
+        for (int i = 0; i < fn.nbits; i++)
+            fprintf(stderr, " 0x%lx", (unsigned long)fn.masks[i]);
+        fprintf(stderr, "\n");
+    } else {
+        fprintf(stderr, TAG "WARNING: bank function derivation failed\n");
+    }
+
+    free(pfns);
+    munmap(buf, BANK_PROBE_SIZE);
 }
 
 static void ensure_tracing(void)
@@ -143,6 +202,7 @@ VKAPI_ATTR VkResult VKAPI_CALL vkAllocateMemory(
     VkDeviceMemory              *pMemory)
 {
     resolve_real_functions();
+    ensure_bank_fn();
     ensure_tracing();
 
     VkResult r = s_real_alloc(device, pAllocateInfo, pAllocator, pMemory);
